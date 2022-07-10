@@ -1,13 +1,13 @@
 ---
 title: "Lab journal"
-author: "by: Rob Franken"
+author: "Emily Kurtz"
 
 
  
 ---
 
 ```{r, install remotely, globalsettings, echo=FALSE, warning=FALSE, results='hide'}
-# install.packages("remotes")
+#install.packages("remotes")
 #remotes::install_github("rlesur/klippy")
 ``` 
 
@@ -25,7 +25,6 @@ colorize <- function(x, color) {sprintf("<span style='color: %s;'>%s</span>", co
 
 ```
 
-##Emily
 
 ```{r klippy, echo=FALSE, include=TRUE}
 klippy::klippy(position = c('top', 'right'))
@@ -48,7 +47,7 @@ Last compiled on `r format(Sys.time(), '%B, %Y')`
 
 ----
   
-Participants of the BIGSSS Summer School can fork this repository. Using this, they can journal their work and assignments.
+Journal of activities from the BIGSSS Summer School. Journal site format created by Rob Franken.
 
 
 :::
@@ -81,9 +80,4 @@ Use the top menu to navigate through the journal.
 
 
 ----
-
-
-
-
-
 

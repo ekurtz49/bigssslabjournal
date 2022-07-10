@@ -1,7 +1,7 @@
 ---
 title: "Journal 1"
 #bibliography: references.bib
-author: "Rob Franken"
+author: "Emily Kurtz"
 output: 
   html_document:
     css: tweaks.css
@@ -39,12 +39,34 @@ Last compiled on `r format(Sys.time(), '%B, %Y')`
 
 ----
   
-This is just an example page of your lab journal.
-You can journal the assignments of the first day here.
+This page will contain as much of the first week's activities (i.e. those on polarization) as I can get done. Down the line, I may reorganize.
   
 
 ----
 
+```{r, include = FALSE}
+fsave <- function(x, file, location = "./data/processed/", ...) {
+    if (!dir.exists(location))
+        dir.create(location)
+    datename <- substr(gsub("[:-]", "", Sys.time()), 1, 8)
+    totalname <- paste(location, datename, file, sep = "")
+    print(paste("SAVED: ", totalname, sep = ""))
+    save(x, file = totalname)
+}
+
+fpackage.check <- function(packages) {
+    lapply(packages, FUN = function(x) {
+        if (!require(x, character.only = TRUE)) {
+            install.packages(x, dependencies = TRUE)
+            library(x, character.only = TRUE)
+        }
+    })
+}
+
+colorize <- function(x, color) {
+    sprintf("<span style='color: %s;'>%s</span>", color, x)
+}
+```
 
 
 
