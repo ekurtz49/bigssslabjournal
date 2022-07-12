@@ -36,4 +36,4 @@ You can keep your personal notes and working scripts a separate folder. Make sur
 ## Hosting on Github:
 1. Recompile the lab journal website using the build function in the top right hand corner;
 2. Commit your changes and push them to GitHub using GitHub Desktop.
-3. Your personal lab journal website will be published at: https://{USERNAME}.github.io/bigssslabjournal/
+3. Your personal lab journal website will be published at: https://ekurtz49.github.io/bigssslabjournal/

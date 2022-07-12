@@ -1,6 +1,6 @@
-name: "Example repo"
+name: "Lab Journal"
 author: 
-  - 'Rob Franken'
+  - 'Emily Kurtz'
 output_dir: "docs"
 exclude: 
   - "data"
@@ -12,8 +12,10 @@ navbar:
       href: index.html
     - text: "My journal"
       menu:
-      - text: "Day 1"
-        href: lab1.html
+ #     - text: "Day 1"
+#        href: lab1.html
+      - text: "Day 6"
+        href: week2day1.html
         
         # here, other .Rmds can be added
 
