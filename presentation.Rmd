@@ -592,13 +592,77 @@ for (u in 1:nrow(cityvor)) {
 ### merging the polarization scores
 
 ```{r}
+cityvor2_as_sf <- sf::st_intersection(x = pollstations, y = cityvor, sf::sf_use_s2(FALSE))
+
 cityvor2 <- merge(as.data.frame(cityvor), as.data.frame(pollstations), by="voronoi")
+#class(cityvor2)<-"sf"
+
+
+
+cityvor2 <- sf::st_as_sf(x = cityvor2, crs = sf::st_crs("+proj=longlat +datum=WGS84"), coords = c("long", "lat"))
+
+
+
+
+cityvor2_as_sf <- st_as_sf(cityvor2, crs=st_crs(cityvor), geom=st_geometry(cityvor))
 ```
 
-### proof of the pudding 
+### Creating Correlation matrices
 
 
 ```{r}
-cor(cityvor2[, c("PVX", "PVY", "PVXY", "D_s2")])
+correlation_matrix <- cor(cityvor2[, c("D_s2", "R_s2", "H_s2", "P12_s2", "P21_s2", "PvarX", 
+                                       "PERX", "PVX", "PvarY", "PERY", "PVY", "PvarXY", 
+                                       "PERXY", "PVXY")])
+correlation_matrix[1:5, 6:ncol(correlation_matrix)]
+correlation_matrix[4, 9] #biggest relevant correlation, P12 and PvarY (which is progressive/conservative)
+```
+
+
+### Create a visual for P12 and PvarY
+
+```{r}
+palette <- leaflet::colorNumeric(
+  palette = "viridis", # or other RColorBrewer palettes e.g "Greens", "magma"
+  domain = cityvor2_as_sf$P12_s2
+)
+leaflet::leaflet(cityvor2_as_sf) |>
+  leaflet::addTiles() |>
+  leaflet::addProviderTiles(providers$Stamen.Toner) |>
+  leaflet::addPolygons(
+    label = ~P12_s2,
+    color = ~palette(P12_s2),
+    opacity = 0.7
+  ) |>
+  leaflet::addLegend(
+    "topleft",
+    pal = palette, 
+    values = ~P12_s2,
+    title = "P12",
+    opacity = 0.7
+  )
+```
+
+
+```{r}
+palette <- leaflet::colorNumeric(
+  palette = "viridis", # or other RColorBrewer palettes e.g "Greens", "magma"
+  domain = cityvor2$PvarY
+)
+leaflet::leaflet(cityvor2_as_sf ) |>
+  leaflet::addTiles() |>
+  leaflet::addProviderTiles(providers$Stamen.Toner) |>
+  leaflet::addPolygons(
+    label = ~PvarY,
+    color = ~palette(PvarY),
+    opacity = 0.7
+  ) |>
+  leaflet::addLegend(
+    "topleft",
+    pal = palette, 
+    values = ~PvarY,
+    title = "PvarY",
+    opacity = 0.7
+  )
 ```
 
