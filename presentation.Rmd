@@ -1,0 +1,604 @@
+---
+title: "presentation"
+author: "Emily Kurtz"
+date: "2022-07-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# getting started  
+
+```{r}
+rm(list = ls())
+
+fsave <- function(x, file, location = "./data/processed/", ...) {
+    if (!dir.exists(location))
+        dir.create(location)
+    datename <- substr(gsub("[:-]", "", Sys.time()), 1, 8)
+    totalname <- paste(location, datename, file, sep = "")
+    print(paste("SAVED: ", totalname, sep = ""))
+    save(x, file = totalname)
+}
+
+fpackage.check <- function(packages) {
+    lapply(packages, FUN = function(x) {
+        if (!require(x, character.only = TRUE)) {
+            install.packages(x, dependencies = TRUE)
+            library(x, character.only = TRUE)
+        }
+    })
+}
+
+colorize <- function(x, color) {
+    sprintf("<span style='color: %s;'>%s</span>", color, x)
+}
+
+
+
+fcalcLocalEnv <- function( # "data" is a 2-columns matrix
+  data, coords, distmat, s, proj4string = sp::CRS("+proj=longlat +datum=WGS84")
+  ) {
+  
+  # Recalculating proximities:
+  proxmat <- exp(- distmat * s)
+  
+  # Calculating the local environment from scratch:
+  #if(is.null(data)) data <- as.matrix(cbind(cityrast$n_w, cityrast$n_nw))
+  env <- matrix(NA, nrow = nrow(data), ncol = 2)
+  for (i in 1:nrow(data)) {
+    env[i,1] <- stats::weighted.mean(x = data[,1], w = proxmat[i,])
+    env[i,2] <- stats::weighted.mean(x = data[,2], w = proxmat[i,])
+  }
+  
+  # And now we bundle this all together in an object of class
+  # "SegLocal", which allows us to use the functions from the package
+  # "seg" to calculate the various measures of segregation.
+  return(seg::SegLocal(
+    coords = coords,
+    data = data,
+    env = env,
+    proj4string = proj4string
+  ))
+}
+
+fcalcLocalEnv <- compiler::cmpfun(fcalcLocalEnv)
+```
+
+
+```{r}
+packages = c("tidyverse", "sf", "ggplot2", "ggimage", "ggmap", "compiler", "Hmisc", "stats", "seg", "leaflet")
+
+fpackage.check(packages)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+## polarization functions 
+
+
+```{r}
+fPvar <- function(votes, positions, method = "euclidean") {
+    positions <- positions * 2  #this function wants a range of 2
+    distances <- as.matrix(dist(positions, method = method))
+    votes_mat <- votes %o% votes
+    diag(votes_mat)[diag(votes_mat) > 1] <- diag(votes_mat)[diag(votes_mat) > 1] - 1
+    Pvar <- Hmisc::wtd.var(as.numeric(distances), as.numeric(votes_mat))
+    return(Pvar)
+}
+fPvar <- cmpfun(fPvar)
+
+fPV <- function(votes, positions, method = "euclidean") {
+    shares <- votes/sum(votes, na.rm = TRUE)
+    pbar <- rep(NA, NCOL(positions))
+    pbar <- as.numeric(t(shares) %*% positions)  #center of mass / mean position
+
+    # distances to mean
+    if (method != "sq") {
+        if (NCOL(positions) == 1) {
+            distances <- as.matrix(stats::dist(c(pbar, positions), method = method))[, 1][-1]
+        } else {
+            distances <- as.matrix(stats::dist(rbind(pbar, positions), method = method))[, 1][-1]
+        }
+    }
+    # if (method=='sq') {distances <- ??}
+
+    # defining the constant
+    if (method == "euclidean") {
+        k <- 2/sqrt(NCOL(positions))
+    }
+    if (method == "manhattan") {
+        k <- 2/NCOL(positions)
+    }
+    if (method == "sq") {
+        k <- 1
+    }
+    PV <- k * sum(shares * distances)
+    return(PV)
+}
+fPV <- cmpfun(fPV)
+
+fPER <- function(alpha = 1, votes, positions, method = "euclidean") {
+    positions <- positions
+    distances <- as.matrix(stats::dist(positions, method = method))
+    shares <- votes/sum(votes, na.rm = TRUE)
+    sharesi <- shares^(1 + alpha)
+    sharesj <- shares
+    ER <- as.numeric(sharesi %*% distances %*% sharesj)
+    return(ER)
+}
+
+fPER <- cmpfun(fPER)
+```
+
+## segregation functions  
+
+# step 1 - adding polarization scores to the pollstations data
+
+## load the cleaned dataset with pollingstations 
+
+```{r}
+load("./data/processed/20220702polling_df")
+js_df <- x
+rm(x)
+```
+
+## load the party positions  
+
+
+<!---you have to explain in 10 seconds to the audience which dimensions you are using
+I use x
+I use y
+I use combination---> 
+
+```{r}
+positions_df <- read_csv2("./data/kieskompas_positie_partijen.csv")  #change to your own file!!
+
+# load('/data/processed/020722positions_data.RData') positions_df <- x rm(x)
+
+# add party images
+positions_df$image <- c("./data/parties_png/BIJ1.jpg", "./data/parties_png/PvdD.jpg", "./data/parties_png/GL.jpg",
+    "./data/parties_png/SP.jpg", "./data/parties_png/PvdA.jpg", "./data/parties_png/DENK.jpg", "./data/parties_png/VOLT.jpg",
+    "./data/parties_png/D66.jpg", "./data/parties_png/CU.jpg", "./data/parties_png/50Plus.jpg", "./data/parties_png/PVV.jpg",
+    "./data/parties_png/CDA.jpg", "./data/parties_png/BBB.jpg", "./data/parties_png/SGP.jpg", "./data/parties_png/vvd.jpg",
+    "./data/parties_png/JA21.jpg", "./data/parties_png/FvD.jpg")
+```
+
+## add polarization scores to polling stations
+
+```{r}
+js_df <- ungroup(js_df)
+
+js_df$PvarX <- rep(NA, nrow(js_df))
+js_df$PERX <- rep(NA, nrow(js_df))
+js_df$PVX <- rep(NA, nrow(js_df))
+
+js_df$PvarY <- rep(NA, nrow(js_df))
+js_df$PERY <- rep(NA, nrow(js_df))
+js_df$PVY <- rep(NA, nrow(js_df))
+
+js_df$PvarXY <- rep(NA, nrow(js_df))
+js_df$PERXY <- rep(NA, nrow(js_df))
+js_df$PVXY <- rep(NA, nrow(js_df))
+
+# I will use dimensions as above, but you will need to tweak of course.
+
+##### XY
+positions <- (cbind(positions_df$x, positions_df$y) + 2)/4  #to range 0-1
+
+for (i in 1:nrow(js_df)) {
+# below things are in the right order, but be sure to check always - match correct vote share to correct party positions
+    votes <- c(js_df$BIJ1[i], js_df$PvdD[i], js_df$GL[i], js_df$SP[i], js_df$PvdA[i], js_df$DENK[i],
+        js_df$Volt[i], js_df$D66[i], js_df$CU[i], js_df$PLUS50[i], js_df$PVV[i], js_df$CDA[i], js_df$BBB[i],
+        js_df$SGP[i], js_df$VVD[i], js_df$JA21[i], js_df$FvD[i])
+    js_df$PvarXY[i] <- fPvar(votes = votes, positions = positions)
+    js_df$PERXY[i] <- fPER(votes = votes, positions = positions)
+    js_df$PVXY[i] <- fPV(votes = votes, positions = positions)
+}
+
+
+##### X
+positions <- cbind((positions_df$x +2)/4)  #to range 0-1
+
+for (i in 1:nrow(js_df)) {
+# below things are in the right order, but be sure to check always - match correct vote share to correct party positions
+    votes <- c(js_df$BIJ1[i], js_df$PvdD[i], js_df$GL[i], js_df$SP[i], js_df$PvdA[i], js_df$DENK[i],
+        js_df$Volt[i], js_df$D66[i], js_df$CU[i], js_df$PLUS50[i], js_df$PVV[i], js_df$CDA[i], js_df$BBB[i],
+        js_df$SGP[i], js_df$VVD[i], js_df$JA21[i], js_df$FvD[i])
+    js_df$PvarX[i] <- fPvar(votes = votes, positions = positions)
+    js_df$PERX[i] <- fPER(votes = votes, positions = positions)
+    js_df$PVX[i] <- fPV(votes = votes, positions = positions)
+}
+
+
+
+##### Y
+positions <- cbind((positions_df$y +2)/4)  #to range 0-1
+
+for (i in 1:nrow(js_df)) {
+# below things are in the right order, but be sure to check always - match correct vote share to correct party positions
+    votes <- c(js_df$BIJ1[i], js_df$PvdD[i], js_df$GL[i], js_df$SP[i], js_df$PvdA[i], js_df$DENK[i],
+        js_df$Volt[i], js_df$D66[i], js_df$CU[i], js_df$PLUS50[i], js_df$PVV[i], js_df$CDA[i], js_df$BBB[i],
+        js_df$SGP[i], js_df$VVD[i], js_df$JA21[i], js_df$FvD[i])
+    js_df$PvarY[i] <- fPvar(votes = votes, positions = positions)
+    js_df$PERY[i] <- fPER(votes = votes, positions = positions)
+    js_df$PVY[i] <- fPV(votes = votes, positions = positions)
+}
+
+# you may get a warning, this is because there is no variance at some polling stations
+```
+
+## saving polarization data
+
+```{r}
+fsave(x = js_df, file = "polarization.rda")
+```
+
+----   
+
+# Step 2 - segregation in voronoi in groningen
+
+## Step 2a - making grid cell data ready 
+
+We are adding administrative unit codes to our raster cells 
+
+### loading in raw gis data
+
+
+```{r}
+# Loading 100m-by-100m raster data:
+rast <- sf::st_read(dsn = "./data/rawGIS/cbs_vk100_2021_v1.gpkg")
+
+
+# Next we load the shapefile of the administrative neighbourhoods ('buurt') and districts ('wijk'):
+neighbShape <- sf::st_read(dsn = "./data/rawGIS/WijkBuurtkaart_2021_v1", layer = "buurt_2021_v1")
+districtShape <- sf::st_read(dsn = "./data/rawGIS/WijkBuurtkaart_2021_v1", layer = "wijk_2021_v1")
+# ... And then the zipcode shapes:
+postcode4Shape <- sf::st_read(dsn = "./data/rawGIS/CBS-PC4-2020-v1", layer = "CBS_pc4_2020_v1")
+postcode5Shape <- sf::st_read(dsn = "./data/rawGIS/CBS-PC5-2020-v1", layer = "CBS_pc5_2020_v1")
+postcode6Shape <- sf::st_read(dsn = "./data/rawGIS/CBS-PC6-2020-v1", layer = "CBS_pc6_2020_v1")
+```
+
+### cleaning
+
+<!---here we are only cleaining `aantal_inwoners` but you are going to use more variables. YOU NEED TO CHECK ALL VARIABLES YOU ARE USING`---> 
+
+```{r}
+# If we want to remove them:
+rast <- rast[rast$aantal_inwoners != -99997, ]
+
+# If we want to replace -99997 with an arbitrary integer in [1,4]:
+# rast$aantal_inwoners[rast$aantal_inwoners == -99997] <- 2
+
+# If we want to replace -99997 with NA: rast$aantal_inwoners[rast$aantal_inwoners == -99997] <- NA
+```
+
+### adding coordinate data
+
+```{r}
+rast <- sf::st_transform(x = rast, crs = sf::st_crs("+proj=longlat +datum=WGS84"))
+
+rast <- sf::st_centroid(rast)
+```
+
+```{r}
+neighbShape <- sf::st_transform(x = neighbShape, crs = sf::st_crs("+proj=longlat +datum=WGS84"))
+districtShape <- sf::st_transform(x = districtShape, crs = sf::st_crs("+proj=longlat +datum=WGS84"))
+postcode4Shape <- sf::st_transform(x = postcode4Shape, crs = sf::st_crs("+proj=longlat +datum=WGS84"))
+postcode5Shape <- sf::st_transform(x = postcode5Shape, crs = sf::st_crs("+proj=longlat +datum=WGS84"))
+postcode6Shape <- sf::st_transform(x = postcode6Shape, crs = sf::st_crs("+proj=longlat +datum=WGS84"))
+
+```
+
+### selection of city/cities  
+
+```{r}
+city <- "Groningen" #PUT IN MULTIPLE CITY NAMES AND LOOP THIS PART OF YOUR SCRIPT AND SAVE YOU DATASETS IN A LIST OR SOMETHING. 
+
+# Selecting relevant districts:
+shape <- districtShape[districtShape$GM_NAAM == city,]
+
+# Assigning random colors to the districts:
+shape$color <- sample(rainbow(n = nrow(shape)))
+
+leaflet::leaflet(shape) |>
+  leaflet::addTiles() |>
+  leaflet::addProviderTiles(providers$Stamen.Toner) |> # Basemap style
+  leaflet::addPolygons(color = ~color, fillColor = ~color, label = ~WK_NAAM)
+```
+
+### add administrative unit names to our raster data  
+
+```{r}
+# Adding administrative area information:
+rast <- sf::st_intersection(x = sf::st_as_sf(rast), y = neighbShape, sf::sf_use_s2(FALSE)  # See https://github.com/r-spatial/sf/issues/1817
+)[,
+    c(1:39, 78)]  # selecting only relevant columns
+
+# Adding postcode information:
+rast <- sf::st_intersection(x = sf::st_as_sf(rast), y = postcode6Shape, sf::sf_use_s2(FALSE))[, c(1:40,
+    74)]  # selecting only relevant columns
+
+# We now have the 6-digits postcodes; the 4- and 5- digits postcodes then are:
+rast$PC5 <- substr(rast$PC6, start = 1, stop = 5)
+rast$PC4 <- substr(rast$PC6, start = 1, stop = 4)
+
+head(rast)
+```
+
+### clean our variables which we will use for segregation
+
+<!---it is here you want to clean your variables with respect to sex/age/ses---> 
+
+
+```{r}
+rast$pnw <- rast$percentage_niet_westerse_migr_achtergr
+rast$pnw[rast$pnw == -99997] <- 0  # or some other arbitrary value
+rast$pnw <- rast$pnw/100
+
+rast$n_nw <- rast$aantal_inwoners * rast$pnw
+rast$n_w <- rast$aantal_inwoners - rast$n_nw
+
+```
+
+
+
+### saving upated raster data  
+
+```{r}
+fsave(rast, compress = TRUE, file = "raster.RData")
+```
+
+## Step 2b - making the voronoi for complete country. 
+
+### loading in data again  
+
+```{r}
+rm(list=ls())
+
+load("./data/processed/20220714raster.RData")
+rast <- x
+rm(x)
+
+load("./data/processed/20220714polarization.rda")
+pollstations <- x
+rm(x)
+
+```
+
+
+### make a point data frame of the polling stations
+
+```{r}
+pollstations <- sf::st_as_sf(x = as.data.frame(pollstations), crs = sf::st_crs("+proj=longlat +datum=WGS84"),
+    coords = c("long", "lat"))
+```
+
+### make voronoi
+
+```{r}
+voronoi <- sf::st_voronoi(x = do.call(c, pollstations$geometry), envelope = NULL  # this is in case we want to specify the Voronoi boundaries
+)
+
+# This ensures that 'voronoi' has the correct CRS
+voronoi <- sf::st_sf(sf::st_collection_extract(voronoi, type = "POLYGON"), crs = sf::st_crs("+proj=longlat +datum=WGS84"))
+
+# This will be the 'id' of each Voronoi tile:
+voronoi$voronoi <- 1:nrow(voronoi)
+```
+
+### quick check by plotting 
+
+```{r}
+leaflet::leaflet(voronoi) |>
+  leaflet::addTiles() |>
+  leaflet::addProviderTiles(providers$Stamen.Toner) |>
+  leaflet::addPolygons(color = "blue") |>
+  leaflet::addCircles(data = pollstations, color = "red") |>
+  leaflet::setView( # This defaults the map view so that it points to Amsterdam
+    lng = 4.9041,
+    lat = 52.3676,
+    zoom = 14
+  )
+```
+
+### assign rasters to appropriate voronoi tile
+
+```{r}
+rast <- sf::st_intersection(x = sf::st_as_sf(rast), y = voronoi, sf::sf_use_s2(FALSE))
+```
+
+
+
+```{r}
+city = "Groningen"
+cityrast <- rast[rast$GM_NAAM == city, ]
+
+palette <- leaflet::colorFactor(sample(colors(), length(unique(cityrast$voronoi))), domain = cityrast$voronoi)
+
+leaflet::leaflet(voronoi) |>
+    leaflet::addTiles() |>
+    leaflet::addProviderTiles(providers$Stamen.Toner) |>
+    leaflet::addPolygons(color = "blue") |>
+    leaflet::addCircles(data = pollstations, color = "red", opacity = 1) |>
+    leaflet::addCircles(data = cityrast, label = ~voronoi, color = ~palette(as.factor(voronoi)), opacity = 0.7) #|>
+    #leaflet::setView(lng = 4.9041, lat = 52.3676, zoom = 14)
+
+```
+
+### save
+
+```{r}
+fsave(rast, compress = TRUE, file = "raster_vor.RData")
+```
+
+### saving shape data sets
+
+See step 2a where we loaded the raw shape files. We are just saving them again with only relevant info. 
+
+```{r}
+neighbShape <- neighbShape[, c(1, 2, 42:44)]
+districtShape <- districtShape[, c(1:4, 39:41)]
+postcode4Shape <- postcode4Shape[, c(1, 37)]
+postcode5Shape <- postcode5Shape[, c(1, 37)]
+postcode6Shape <- postcode6Shape[, c(1, 35)]
+fsave(list(neighbShape, districtShape, postcode4Shape, postcode5Shape, postcode6Shape, voronoi), compress = TRUE,
+    file = "shapes.RData")
+```
+
+
+## Step 2 c - actually do the segregation calculations
+
+### loading in data again
+
+```{r}
+# raster points for the whole country, with coordinates, voronoi tiles, and administrative information added
+load("./data/processed/20220714raster_vor.RData")
+rast <- x
+rm(x)
+
+load("./data/processed/20220714shapes.RData")
+shapes <- x
+rm(x)
+voronoi <- shapes[[6]]
+
+load("./data/processed/20220714polarization.rda")
+pollstations <- x
+rm(x)
+
+# Ensuring that the class of 'pollstations' is 'sf' and the CRS is correct:
+pollstations <- sf::st_as_sf(x = as.data.frame(pollstations), crs = sf::st_crs("+proj=longlat +datum=WGS84"),
+    coords = c("long", "lat"))
+```
+
+### matching the polling stations to the correct voronoi - matching on geometries (combining data sets)
+
+```{r}
+pollstations <- sf::st_intersection(x = pollstations, y = voronoi, sf::sf_use_s2(FALSE))
+```
+
+### check to make sure it is correct
+
+```{r}
+tile = 3000
+
+tilerast <- subset(rast, rast$voronoi == tile)
+station <- subset(pollstations, pollstations$voronoi == tile)
+voronoi_tile <- voronoi[tile, ]
+
+leaflet::leaflet(tilerast) |>
+    leaflet::addTiles() |>
+    leaflet::addProviderTiles(providers$Stamen.Toner) |>
+    leaflet::addPolygons(data = voronoi) |>
+    leaflet::addPolygons(data = voronoi_tile, color = "red") |>
+    leaflet::addCircles(color = "green") |>
+    leaflet::addCircles(data = station, color = "red", opacity = 1) |>
+    leaflet::setView(lng = sf::st_coordinates(station)[, 1], lat = sf::st_coordinates(station)[, 2],
+        zoom = 14)
+```
+
+### city selection
+
+```{r}
+city <- "Groningen"
+
+#select correct rasters cells 
+cityrast_id <- which(rast$GM_NAAM == city)  # will come handy later ;)
+cityrast <- rast[cityrast_id, ]
+
+#select correct voronois
+cityvor <- voronoi[voronoi$voronoi %in% rast$voronoi[cityrast_id], ]
+
+
+```
+
+### calculate distance matrix
+
+```{r}
+distmat <- matrix(sf::st_distance(cityrast), ncol = nrow(cityrast))
+distmat <- distmat/1000
+
+# set main diagonal to .052
+diag(distmat) <- 0.052140543316
+
+```
+
+### writing a loop
+
+```{r}
+# slope of the distance decay function:
+s <- 2
+
+
+# For each voronoi tile "i" in the city...
+for (u in 1:nrow(cityvor)) {
+  
+  
+  #... we find which raster cells belong to tile "i".
+  #tilerast <- subset(cityrast, cityrast$voronoi == cityvor$voronoi[u])
+  tilerast <- cityrast[cityrast$voronoi == cityvor$voronoi[u],]
+  
+  #now we select the raster cells id within the tile
+  cellids <- which(cityrast$crs28992res100m %in% tilerast$crs28992res100m)
+  
+  # And if there are more than 2 raster cells within tile...
+  if (nrow(tilerast) > 1) {
+    # ... then calculate distances among its raster cells...
+    distmatcell <- distmat[cellids, cellids] 
+      
+    
+    
+    #... calculate the local environment of each cell...
+    myenv <- fcalcLocalEnv(
+      data = as.matrix(cbind(tilerast$n_w, tilerast$n_nw)),
+      distmat = distmatcell,
+      coords = sf::st_coordinates(tilerast),
+      s = s
+    )
+    
+    #use the seg package to calculate segregation measures. 
+    seg <- seg::spatseg(myenv)
+    
+    
+    #... and, finally, save the I estimate to our data.frame "vor":
+    cityvor$D_s2[u] <- seg@d
+    cityvor$R_s2[u] <- seg@r
+    cityvor$H_s2[u] <- seg@h
+    cityvor$P12_s2[u] <- seg@p[1,2]
+    cityvor$P21_s2[u] <- seg@p[2,1]
+    
+    #may want to add proximity index. 
+    
+    
+  }
+  
+}
+```
+
+### merging the polarization scores
+
+```{r}
+cityvor2 <- merge(as.data.frame(cityvor), as.data.frame(pollstations), by="voronoi")
+```
+
+### proof of the pudding 
+
+
+```{r}
+cor(cityvor2[, c("PVX", "PVY", "PVXY", "D_s2")])
+```
+

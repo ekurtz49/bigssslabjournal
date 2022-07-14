@@ -98,6 +98,14 @@ Tivadar (2019)
 
 B. For this BIGSSS we will use GIS data from Statistics Netherlands, at the municipality, district (‘wijk’), (‘buurt’) and 100-by-100 meter grid level. What are the basic requirements of data necessary and sufficient to determine the level of spatial segregation in specific areas of the Netherlands? Make a list of requirements for non-spatial and spatial measures.
 
+Non-spatial:
+
+Evenness & exposure (census tract boundaries), group sizes, how they are distributed in space.
+
+Spatial:
+
+spatial proximity of neighborhoods (checkerboard issue), boundaries of units (MAUP issue), clustering, concentration, & centralization (location and size of census tract)
+
 C. How would you theoretically want to define the spatial distance between voters/citizens in the Netherlands?
 
 Measuring the distance using the Euclidean metric doesn't seem like the best idea. As a simple example, imagine two situations in a city that is organized along a perfect square grid. In the first, two friends live 10 north/south blocks and 10 east/west blocks away from each other. Their Euclidean distance is $\sqrt{200}$ blocks, but the friends have to walk 20 blocks to get to each other. In the second situation, the friends live on the same east/west road, but 20 blocks from each other. They still must walk 20 blocks, but the Euclidean distance is is also 20 blocks, which is much more than $\sqrt{200}$.
@@ -113,5 +121,20 @@ Gimpel and various colleagues have some interesting theoretical work that is som
 Since we are studying voting, a private act, instead of publicly stated political views, we may not see this pattern, but I thought it, and the work more broadly, would be interesting to consider going forward.
 
 Gimpel, J. & Reeves, A. Political Geography, Political Behavior, and Public Opinion. (Forthcoming). 
+
+
+
+
+----
+  
+Recreating the Reardon & O'Sullivan Visual Using iniworld
+  
+
+----
+
+
+There are two dimensions: evenness (clustering) and exposure (isolation). Evenness refers to the degree to which the proportions of groups within a smaller subarea match their proportions in the overall population, and exposure refers to the degree to which members of one group encounter in their local environment members of each group. 
+
+
 
 
