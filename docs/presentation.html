@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Emily Kurtz" />
+
+<meta name="date" content="2022-07-14" />
+
+<title>presentation</title>
+
+<script src="site_libs/header-attrs-2.14/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/flatly.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+<link rel="stylesheet" href="tweaks.css" type="text/css" />
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html"></a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="presentation.html">
+    <span class="fa fa-home"></span>
+     
+    My presentation
+  </a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/robfranken/bigssslabjournal">
+    <span class="fab fa-github"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">presentation</h1>
+<h4 class="author">Emily Kurtz</h4>
+<h4 class="date">2022-07-14</h4>
+
+</div>
+
+
+<div id="getting-started" class="section level1">
+<h1>getting started</h1>
+<pre class="r"><code>rm(list = ls())
+fsave &lt;- function(x, file, location = &quot;./data/processed/&quot;, ...) {
+    if (!dir.exists(location))
+        dir.create(location)
+    datename &lt;- substr(gsub(&quot;[:-]&quot;, &quot;&quot;, Sys.time()), 1, 8)
+    totalname &lt;- paste(location, datename, file, sep = &quot;&quot;)
+    print(paste(&quot;SAVED: &quot;, totalname, sep = &quot;&quot;))
+    save(x, file = totalname)
+}
+fpackage.check &lt;- function(packages) {
+    lapply(packages, FUN = function(x) {
+        if (!require(x, character.only = TRUE)) {
+            install.packages(x, dependencies = TRUE)
+            library(x, character.only = TRUE)
+        }
+    })
+}
+colorize &lt;- function(x, color) {
+    sprintf(&quot;&lt;span style=&#39;color: %s;&#39;&gt;%s&lt;/span&gt;&quot;, color, x)
+}
+fcalcLocalEnv &lt;- function( # &quot;data&quot; is a 2-columns matrix
+  data, coords, distmat, s, proj4string = sp::CRS(&quot;+proj=longlat +datum=WGS84&quot;)
+  ) {
+  
+  # Recalculating proximities:
+  proxmat &lt;- exp(- distmat * s)
+  
+  # Calculating the local environment from scratch:
+  #if(is.null(data)) data &lt;- as.matrix(cbind(cityrast$n_w, cityrast$n_nw))
+  env &lt;- matrix(NA, nrow = nrow(data), ncol = 2)
+  for (i in 1:nrow(data)) {
+    env[i,1] &lt;- stats::weighted.mean(x = data[,1], w = proxmat[i,])
+    env[i,2] &lt;- stats::weighted.mean(x = data[,2], w = proxmat[i,])
+  }
+  
+  # And now we bundle this all together in an object of class
+  # &quot;SegLocal&quot;, which allows us to use the functions from the package
+  # &quot;seg&quot; to calculate the various measures of segregation.
+  return(seg::SegLocal(
+    coords = coords,
+    data = data,
+    env = env,
+    proj4string = proj4string
+  ))
+}
+fcalcLocalEnv &lt;- compiler::cmpfun(fcalcLocalEnv)</code></pre>
+<pre class="r"><code>packages = c(&quot;tidyverse&quot;, &quot;sf&quot;, &quot;ggplot2&quot;, &quot;ggimage&quot;, &quot;ggmap&quot;, &quot;compiler&quot;, &quot;Hmisc&quot;, &quot;stats&quot;, &quot;seg&quot;, &quot;leaflet&quot;)
+fpackage.check(packages)</code></pre>
+<pre><code>## Loading required package: tidyverse</code></pre>
+<pre><code>## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──</code></pre>
+<pre><code>## ✔ ggplot2 3.3.6     ✔ purrr   0.3.4
+## ✔ tibble  3.1.7     ✔ dplyr   1.0.9
+## ✔ tidyr   1.2.0     ✔ stringr 1.4.0
+## ✔ readr   2.1.2     ✔ forcats 0.5.1</code></pre>
+<pre><code>## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+## ✖ dplyr::filter() masks stats::filter()
+## ✖ dplyr::lag()    masks stats::lag()</code></pre>
+<pre><code>## Loading required package: sf</code></pre>
+<pre><code>## Linking to GEOS 3.9.1, GDAL 3.4.2, PROJ 8.2.1; sf_use_s2() is TRUE</code></pre>
+<pre><code>## Loading required package: ggimage</code></pre>
+<pre><code>## Loading required package: ggmap</code></pre>
+<pre><code>## Google&#39;s Terms of Service: https://cloud.google.com/maps-platform/terms/.</code></pre>
+<pre><code>## Please cite ggmap if you use it! See citation(&quot;ggmap&quot;) for details.</code></pre>
+<pre><code>## 
+## Attaching package: &#39;ggmap&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:ggimage&#39;:
+## 
+##     theme_nothing</code></pre>
+<pre><code>## Loading required package: compiler</code></pre>
+<pre><code>## Loading required package: Hmisc</code></pre>
+<pre><code>## Loading required package: lattice</code></pre>
+<pre><code>## Loading required package: survival</code></pre>
+<pre><code>## Loading required package: Formula</code></pre>
+<pre><code>## 
+## Attaching package: &#39;Hmisc&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:dplyr&#39;:
+## 
+##     src, summarize</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     format.pval, units</code></pre>
+<pre><code>## Loading required package: seg</code></pre>
+<pre><code>## Loading required package: sp</code></pre>
+<pre><code>## Loading required package: leaflet</code></pre>
+<pre><code>## [[1]]
+## NULL
+## 
+## [[2]]
+## NULL
+## 
+## [[3]]
+## NULL
+## 
+## [[4]]
+## NULL
+## 
+## [[5]]
+## NULL
+## 
+## [[6]]
+## NULL
+## 
+## [[7]]
+## NULL
+## 
+## [[8]]
+## NULL
+## 
+## [[9]]
+## NULL
+## 
+## [[10]]
+## NULL</code></pre>
+<div id="polarization-functions" class="section level2">
+<h2>polarization functions</h2>
+<pre class="r"><code>fPvar &lt;- function(votes, positions, method = &quot;euclidean&quot;) {
+    positions &lt;- positions * 2  #this function wants a range of 2
+    distances &lt;- as.matrix(dist(positions, method = method))
+    votes_mat &lt;- votes %o% votes
+    diag(votes_mat)[diag(votes_mat) &gt; 1] &lt;- diag(votes_mat)[diag(votes_mat) &gt; 1] - 1
+    Pvar &lt;- Hmisc::wtd.var(as.numeric(distances), as.numeric(votes_mat))
+    return(Pvar)
+}
+fPvar &lt;- cmpfun(fPvar)
+fPV &lt;- function(votes, positions, method = &quot;euclidean&quot;) {
+    shares &lt;- votes/sum(votes, na.rm = TRUE)
+    pbar &lt;- rep(NA, NCOL(positions))
+    pbar &lt;- as.numeric(t(shares) %*% positions)  #center of mass / mean position
+    # distances to mean
+    if (method != &quot;sq&quot;) {
+        if (NCOL(positions) == 1) {
+            distances &lt;- as.matrix(stats::dist(c(pbar, positions), method = method))[, 1][-1]
+        } else {
+            distances &lt;- as.matrix(stats::dist(rbind(pbar, positions), method = method))[, 1][-1]
+        }
+    }
+    # if (method==&#39;sq&#39;) {distances &lt;- ??}
+    # defining the constant
+    if (method == &quot;euclidean&quot;) {
+        k &lt;- 2/sqrt(NCOL(positions))
+    }
+    if (method == &quot;manhattan&quot;) {
+        k &lt;- 2/NCOL(positions)
+    }
+    if (method == &quot;sq&quot;) {
+        k &lt;- 1
+    }
+    PV &lt;- k * sum(shares * distances)
+    return(PV)
+}
+fPV &lt;- cmpfun(fPV)
+fPER &lt;- function(alpha = 1, votes, positions, method = &quot;euclidean&quot;) {
+    positions &lt;- positions
+    distances &lt;- as.matrix(stats::dist(positions, method = method))
+    shares &lt;- votes/sum(votes, na.rm = TRUE)
+    sharesi &lt;- shares^(1 + alpha)
+    sharesj &lt;- shares
+    ER &lt;- as.numeric(sharesi %*% distances %*% sharesj)
+    return(ER)
+}
+fPER &lt;- cmpfun(fPER)</code></pre>
+</div>
+<div id="segregation-functions" class="section level2">
+<h2>segregation functions</h2>
+</div>
+</div>
+<div id="step-1---adding-polarization-scores-to-the-pollstations-data"
+class="section level1">
+<h1>step 1 - adding polarization scores to the pollstations data</h1>
+<div id="load-the-cleaned-dataset-with-pollingstations"
+class="section level2">
+<h2>load the cleaned dataset with pollingstations</h2>
+<pre class="r"><code>load(&quot;./data/processed/20220702polling_df&quot;)
+js_df &lt;- x
+rm(x)</code></pre>
+</div>
+<div id="load-the-party-positions" class="section level2">
+<h2>load the party positions</h2>
+<!---you have to explain in 10 seconds to the audience which dimensions you are using
+I use x
+I use y
+I use combination--->
+<pre class="r"><code>positions_df &lt;- read_csv2(&quot;./data/kieskompas_positie_partijen.csv&quot;)  #change to your own file!!</code></pre>
+<pre><code>## ℹ Using &quot;&#39;,&#39;&quot; as decimal and &quot;&#39;.&#39;&quot; as grouping mark. Use `read_delim()` for more control.</code></pre>
+<pre><code>## Rows: 17 Columns: 5
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;;&quot;
+## chr (1): partij
+## dbl (4): links (-x), progressief (y), x, y
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code># load(&#39;/data/processed/020722positions_data.RData&#39;) positions_df &lt;- x rm(x)
+# add party images
+positions_df$image &lt;- c(&quot;./data/parties_png/BIJ1.jpg&quot;, &quot;./data/parties_png/PvdD.jpg&quot;, &quot;./data/parties_png/GL.jpg&quot;,
+    &quot;./data/parties_png/SP.jpg&quot;, &quot;./data/parties_png/PvdA.jpg&quot;, &quot;./data/parties_png/DENK.jpg&quot;, &quot;./data/parties_png/VOLT.jpg&quot;,
+    &quot;./data/parties_png/D66.jpg&quot;, &quot;./data/parties_png/CU.jpg&quot;, &quot;./data/parties_png/50Plus.jpg&quot;, &quot;./data/parties_png/PVV.jpg&quot;,
+    &quot;./data/parties_png/CDA.jpg&quot;, &quot;./data/parties_png/BBB.jpg&quot;, &quot;./data/parties_png/SGP.jpg&quot;, &quot;./data/parties_png/vvd.jpg&quot;,
+    &quot;./data/parties_png/JA21.jpg&quot;, &quot;./data/parties_png/FvD.jpg&quot;)</code></pre>
+</div>
+<div id="add-polarization-scores-to-polling-stations"
+class="section level2">
+<h2>add polarization scores to polling stations</h2>
+<pre class="r"><code>js_df &lt;- ungroup(js_df)
+js_df$PvarX &lt;- rep(NA, nrow(js_df))
+js_df$PERX &lt;- rep(NA, nrow(js_df))
+js_df$PVX &lt;- rep(NA, nrow(js_df))
+js_df$PvarY &lt;- rep(NA, nrow(js_df))
+js_df$PERY &lt;- rep(NA, nrow(js_df))
+js_df$PVY &lt;- rep(NA, nrow(js_df))
+js_df$PvarXY &lt;- rep(NA, nrow(js_df))
+js_df$PERXY &lt;- rep(NA, nrow(js_df))
+js_df$PVXY &lt;- rep(NA, nrow(js_df))
+# I will use dimensions as above, but you will need to tweak of course.
+##### XY
+positions &lt;- (cbind(positions_df$x, positions_df$y) + 2)/4  #to range 0-1
+for (i in 1:nrow(js_df)) {
+# below things are in the right order, but be sure to check always - match correct vote share to correct party positions
+    votes &lt;- c(js_df$BIJ1[i], js_df$PvdD[i], js_df$GL[i], js_df$SP[i], js_df$PvdA[i], js_df$DENK[i],
+        js_df$Volt[i], js_df$D66[i], js_df$CU[i], js_df$PLUS50[i], js_df$PVV[i], js_df$CDA[i], js_df$BBB[i],
+        js_df$SGP[i], js_df$VVD[i], js_df$JA21[i], js_df$FvD[i])
+    js_df$PvarXY[i] &lt;- fPvar(votes = votes, positions = positions)
+    js_df$PERXY[i] &lt;- fPER(votes = votes, positions = positions)
+    js_df$PVXY[i] &lt;- fPV(votes = votes, positions = positions)
+}
+##### X
+positions &lt;- cbind((positions_df$x +2)/4)  #to range 0-1
+for (i in 1:nrow(js_df)) {
+# below things are in the right order, but be sure to check always - match correct vote share to correct party positions
+    votes &lt;- c(js_df$BIJ1[i], js_df$PvdD[i], js_df$GL[i], js_df$SP[i], js_df$PvdA[i], js_df$DENK[i],
+        js_df$Volt[i], js_df$D66[i], js_df$CU[i], js_df$PLUS50[i], js_df$PVV[i], js_df$CDA[i], js_df$BBB[i],
+        js_df$SGP[i], js_df$VVD[i], js_df$JA21[i], js_df$FvD[i])
+    js_df$PvarX[i] &lt;- fPvar(votes = votes, positions = positions)
+    js_df$PERX[i] &lt;- fPER(votes = votes, positions = positions)
+    js_df$PVX[i] &lt;- fPV(votes = votes, positions = positions)
+}
+##### Y
+positions &lt;- cbind((positions_df$y +2)/4)  #to range 0-1
+for (i in 1:nrow(js_df)) {
+# below things are in the right order, but be sure to check always - match correct vote share to correct party positions
+    votes &lt;- c(js_df$BIJ1[i], js_df$PvdD[i], js_df$GL[i], js_df$SP[i], js_df$PvdA[i], js_df$DENK[i],
+        js_df$Volt[i], js_df$D66[i], js_df$CU[i], js_df$PLUS50[i], js_df$PVV[i], js_df$CDA[i], js_df$BBB[i],
+        js_df$SGP[i], js_df$VVD[i], js_df$JA21[i], js_df$FvD[i])
+    js_df$PvarY[i] &lt;- fPvar(votes = votes, positions = positions)
+    js_df$PERY[i] &lt;- fPER(votes = votes, positions = positions)
+    js_df$PVY[i] &lt;- fPV(votes = votes, positions = positions)
+}
+# you may get a warning, this is because there is no variance at some polling stations</code></pre>
+</div>
+<div id="saving-polarization-data" class="section level2">
+<h2>saving polarization data</h2>
+<pre class="r"><code>fsave(x = js_df, file = &quot;polarization.rda&quot;)</code></pre>
+<pre><code>## [1] &quot;SAVED: ./data/processed/20220715polarization.rda&quot;</code></pre>
+<hr />
+</div>
+</div>
+<div id="step-2---segregation-in-voronoi-in-groningen"
+class="section level1">
+<h1>Step 2 - segregation in voronoi in groningen</h1>
+<div id="step-2a---making-grid-cell-data-ready" class="section level2">
+<h2>Step 2a - making grid cell data ready</h2>
+<p>We are adding administrative unit codes to our raster cells</p>
+<div id="loading-in-raw-gis-data" class="section level3">
+<h3>loading in raw gis data</h3>
+<pre class="r"><code># Loading 100m-by-100m raster data:
+rast &lt;- sf::st_read(dsn = &quot;./data/rawGIS/cbs_vk100_2021_v1.gpkg&quot;)</code></pre>
+<pre><code>## Reading layer `vierkant_100m_2021&#39; from data source 
+##   `/Users/emily/Documents/GitHub/bigssslabjournal/data/rawGIS/cbs_vk100_2021_v1.gpkg&#39; 
+##   using driver `GPKG&#39;
+## Simple feature collection with 386024 features and 34 fields
+## Geometry type: MULTIPOLYGON
+## Dimension:     XY
+## Bounding box:  xmin: 13900 ymin: 307500 xmax: 277500 ymax: 611500
+## Projected CRS: Amersfoort / RD New</code></pre>
+<pre class="r"><code># Next we load the shapefile of the administrative neighbourhoods (&#39;buurt&#39;) and districts (&#39;wijk&#39;):
+neighbShape &lt;- sf::st_read(dsn = &quot;./data/rawGIS/WijkBuurtkaart_2021_v1&quot;, layer = &quot;buurt_2021_v1&quot;)</code></pre>
+<pre><code>## Reading layer `buurt_2021_v1&#39; from data source 
+##   `/Users/emily/Documents/GitHub/bigssslabjournal/data/rawGIS/WijkBuurtkaart_2021_v1&#39; 
+##   using driver `ESRI Shapefile&#39;
+## Simple feature collection with 14175 features and 43 fields
+## Geometry type: MULTIPOLYGON
+## Dimension:     XY
+## Bounding box:  xmin: 10425.16 ymin: 306846.2 xmax: 278026.1 ymax: 621876.3
+## Projected CRS: Amersfoort / RD New</code></pre>
+<pre class="r"><code>districtShape &lt;- sf::st_read(dsn = &quot;./data/rawGIS/WijkBuurtkaart_2021_v1&quot;, layer = &quot;wijk_2021_v1&quot;)</code></pre>
+<pre><code>## Reading layer `wijk_2021_v1&#39; from data source 
+##   `/Users/emily/Documents/GitHub/bigssslabjournal/data/rawGIS/WijkBuurtkaart_2021_v1&#39; 
+##   using driver `ESRI Shapefile&#39;
+## Simple feature collection with 3331 features and 40 fields
+## Geometry type: MULTIPOLYGON
+## Dimension:     XY
+## Bounding box:  xmin: 10425.16 ymin: 306846.2 xmax: 278026.1 ymax: 621876.3
+## Projected CRS: Amersfoort / RD New</code></pre>
+<pre class="r"><code># ... And then the zipcode shapes:
+postcode4Shape &lt;- sf::st_read(dsn = &quot;./data/rawGIS/CBS-PC4-2020-v1&quot;, layer = &quot;CBS_pc4_2020_v1&quot;)</code></pre>
+<pre><code>## Reading layer `CBS_pc4_2020_v1&#39; from data source 
+##   `/Users/emily/Documents/GitHub/bigssslabjournal/data/rawGIS/CBS-PC4-2020-v1&#39; 
+##   using driver `ESRI Shapefile&#39;
+## Simple feature collection with 4068 features and 36 fields
+## Geometry type: MULTIPOLYGON
+## Dimension:     XY
+## Bounding box:  xmin: 13565.4 ymin: 306846.2 xmax: 278026.1 ymax: 615045.3
+## Projected CRS: Amersfoort / RD New</code></pre>
+<pre class="r"><code>postcode5Shape &lt;- sf::st_read(dsn = &quot;./data/rawGIS/CBS-PC5-2020-v1&quot;, layer = &quot;CBS_pc5_2020_v1&quot;)</code></pre>
+<pre><code>## Reading layer `CBS_pc5_2020_v1&#39; from data source 
+##   `/Users/emily/Documents/GitHub/bigssslabjournal/data/rawGIS/CBS-PC5-2020-v1&#39; 
+##   using driver `ESRI Shapefile&#39;
+## Simple feature collection with 33287 features and 36 fields
+## Geometry type: MULTIPOLYGON
+## Dimension:     XY
+## Bounding box:  xmin: 13565.4 ymin: 306846.2 xmax: 278026.1 ymax: 615045.3
+## Projected CRS: Amersfoort / RD New</code></pre>
+<pre class="r"><code>postcode6Shape &lt;- sf::st_read(dsn = &quot;./data/rawGIS/CBS-PC6-2020-v1&quot;, layer = &quot;CBS_pc6_2020_v1&quot;)</code></pre>
+<pre><code>## Reading layer `CBS_pc6_2020_v1&#39; from data source 
+##   `/Users/emily/Documents/GitHub/bigssslabjournal/data/rawGIS/CBS-PC6-2020-v1&#39; 
+##   using driver `ESRI Shapefile&#39;
+## Simple feature collection with 460392 features and 34 fields
+## Geometry type: MULTIPOLYGON
+## Dimension:     XY
+## Bounding box:  xmin: 13565.4 ymin: 306846.2 xmax: 278026.1 ymax: 615045.3
+## Projected CRS: Amersfoort / RD New</code></pre>
+</div>
+<div id="cleaning" class="section level3">
+<h3>cleaning</h3>
+<!---here we are only cleaining `aantal_inwoners` but you are going to use more variables. YOU NEED TO CHECK ALL VARIABLES YOU ARE USING`--->
+<pre class="r"><code># If we want to remove them:
+rast &lt;- rast[rast$aantal_inwoners != -99997, ]
+# If we want to replace -99997 with an arbitrary integer in [1,4]:
+# rast$aantal_inwoners[rast$aantal_inwoners == -99997] &lt;- 2
+# If we want to replace -99997 with NA: rast$aantal_inwoners[rast$aantal_inwoners == -99997] &lt;- NA</code></pre>
+</div>
+<div id="adding-coordinate-data" class="section level3">
+<h3>adding coordinate data</h3>
+<pre class="r"><code>rast &lt;- sf::st_transform(x = rast, crs = sf::st_crs(&quot;+proj=longlat +datum=WGS84&quot;))
+rast &lt;- sf::st_centroid(rast)</code></pre>
+<pre><code>## Warning in st_centroid.sf(rast): st_centroid assumes attributes are constant
+## over geometries of x</code></pre>
+<pre class="r"><code>neighbShape &lt;- sf::st_transform(x = neighbShape, crs = sf::st_crs(&quot;+proj=longlat +datum=WGS84&quot;))
+districtShape &lt;- sf::st_transform(x = districtShape, crs = sf::st_crs(&quot;+proj=longlat +datum=WGS84&quot;))
+postcode4Shape &lt;- sf::st_transform(x = postcode4Shape, crs = sf::st_crs(&quot;+proj=longlat +datum=WGS84&quot;))
+postcode5Shape &lt;- sf::st_transform(x = postcode5Shape, crs = sf::st_crs(&quot;+proj=longlat +datum=WGS84&quot;))
+postcode6Shape &lt;- sf::st_transform(x = postcode6Shape, crs = sf::st_crs(&quot;+proj=longlat +datum=WGS84&quot;))</code></pre>
+</div>
+<div id="selection-of-citycities" class="section level3">
+<h3>selection of city/cities</h3>
+<pre class="r"><code>city &lt;- &quot;Groningen&quot; #PUT IN MULTIPLE CITY NAMES AND LOOP THIS PART OF YOUR SCRIPT AND SAVE YOU DATASETS IN A LIST OR SOMETHING. 
+# Selecting relevant districts:
+shape &lt;- districtShape[districtShape$GM_NAAM == city,]
+# Assigning random colors to the districts:
+shape$color &lt;- sample(rainbow(n = nrow(shape)))
+leaflet::leaflet(shape) |&gt;
+  leaflet::addTiles() |&gt;
+  leaflet::addProviderTiles(providers$Stamen.Toner) |&gt; # Basemap style
+  leaflet::addPolygons(color = ~color, fillColor = ~color, label = ~WK_NAAM)</code></pre>
+</div>
+<div id="add-administrative-unit-names-to-our-raster-data"
+class="section level3">
+<h3>add administrative unit names to our raster data</h3>
+<pre class="r"><code># Adding administrative area information:
+rast &lt;- sf::st_intersection(x = sf::st_as_sf(rast), y = neighbShape, sf::sf_use_s2(FALSE)  # See https://github.com/r-spatial/sf/issues/1817
+)[,
+    c(1:39, 78)]  # selecting only relevant columns
+# Adding postcode information:
+rast &lt;- sf::st_intersection(x = sf::st_as_sf(rast), y = postcode6Shape, sf::sf_use_s2(FALSE))[, c(1:40,
+    74)]  # selecting only relevant columns
+# We now have the 6-digits postcodes; the 4- and 5- digits postcodes then are:
+rast$PC5 &lt;- substr(rast$PC6, start = 1, stop = 5)
+rast$PC4 &lt;- substr(rast$PC6, start = 1, stop = 4)
+head(rast)</code></pre>
+</div>
+<div id="clean-our-variables-which-we-will-use-for-segregation"
+class="section level3">
+<h3>clean our variables which we will use for segregation</h3>
+<!---it is here you want to clean your variables with respect to sex/age/ses--->
+<pre class="r"><code>rast$pnw &lt;- rast$percentage_niet_westerse_migr_achtergr
+rast$pnw[rast$pnw == -99997] &lt;- 0  # or some other arbitrary value
+rast$pnw &lt;- rast$pnw/100
+rast$n_nw &lt;- rast$aantal_inwoners * rast$pnw
+rast$n_w &lt;- rast$aantal_inwoners - rast$n_nw</code></pre>
+</div>
+<div id="saving-upated-raster-data" class="section level3">
+<h3>saving upated raster data</h3>
+<pre class="r"><code>fsave(rast, compress = TRUE, file = &quot;raster.RData&quot;)</code></pre>
+</div>
+</div>
+<div id="step-2b---making-the-voronoi-for-complete-country."
+class="section level2">
+<h2>Step 2b - making the voronoi for complete country.</h2>
+<div id="loading-in-data-again" class="section level3">
+<h3>loading in data again</h3>
+<pre class="r"><code>#rm(list=ls())
+#load(&quot;./data/processed/20220714raster.RData&quot;)
+#rast &lt;- x
+#rm(x)
+load(&quot;./data/processed/20220715polarization.rda&quot;)
+pollstations &lt;- x
+rm(x)</code></pre>
+</div>
+<div id="make-a-point-data-frame-of-the-polling-stations"
+class="section level3">
+<h3>make a point data frame of the polling stations</h3>
+<pre class="r"><code>pollstations &lt;- sf::st_as_sf(x = as.data.frame(pollstations), crs = sf::st_crs(&quot;+proj=longlat +datum=WGS84&quot;),
+    coords = c(&quot;long&quot;, &quot;lat&quot;))</code></pre>
+</div>
+<div id="make-voronoi" class="section level3">
+<h3>make voronoi</h3>
+<pre class="r"><code>voronoi &lt;- sf::st_voronoi(x = do.call(c, pollstations$geometry), envelope = NULL  # this is in case we want to specify the Voronoi boundaries
+)
+# This ensures that &#39;voronoi&#39; has the correct CRS
+voronoi &lt;- sf::st_sf(sf::st_collection_extract(voronoi, type = &quot;POLYGON&quot;), crs = sf::st_crs(&quot;+proj=longlat +datum=WGS84&quot;))
+# This will be the &#39;id&#39; of each Voronoi tile:
+voronoi$voronoi &lt;- 1:nrow(voronoi)</code></pre>
+</div>
+<div id="quick-check-by-plotting" class="section level3">
+<h3>quick check by plotting</h3>
+<pre class="r"><code>leaflet::leaflet(voronoi) |&gt;
+  leaflet::addTiles() |&gt;
+  leaflet::addProviderTiles(providers$Stamen.Toner) |&gt;
+  leaflet::addPolygons(color = &quot;blue&quot;) |&gt;
+  leaflet::addCircles(data = pollstations, color = &quot;red&quot;) |&gt;
+  leaflet::setView( # This defaults the map view so that it points to Amsterdam
+    lng = 4.9041,
+    lat = 52.3676,
+    zoom = 14
+  )</code></pre>
+</div>
+<div id="assign-rasters-to-appropriate-voronoi-tile"
+class="section level3">
+<h3>assign rasters to appropriate voronoi tile</h3>
+<pre class="r"><code>rast &lt;- sf::st_intersection(x = sf::st_as_sf(rast), y = voronoi, sf::sf_use_s2(FALSE))</code></pre>
+<pre class="r"><code>city = &quot;Groningen&quot;
+cityrast &lt;- rast[rast$GM_NAAM == city, ]
+palette &lt;- leaflet::colorFactor(sample(colors(), length(unique(cityrast$voronoi))), domain = cityrast$voronoi)
+leaflet::leaflet(voronoi) |&gt;
+    leaflet::addTiles() |&gt;
+    leaflet::addProviderTiles(providers$Stamen.Toner) |&gt;
+    leaflet::addPolygons(color = &quot;blue&quot;) |&gt;
+    leaflet::addCircles(data = pollstations, color = &quot;red&quot;, opacity = 1) |&gt;
+    leaflet::addCircles(data = cityrast, label = ~voronoi, color = ~palette(as.factor(voronoi)), opacity = 0.7) #|&gt;
+    #leaflet::setView(lng = 4.9041, lat = 52.3676, zoom = 14)</code></pre>
+</div>
+<div id="save" class="section level3">
+<h3>save</h3>
+<pre class="r"><code>fsave(rast, compress = TRUE, file = &quot;raster_vor.RData&quot;)</code></pre>
+</div>
+<div id="saving-shape-data-sets" class="section level3">
+<h3>saving shape data sets</h3>
+<p>See step 2a where we loaded the raw shape files. We are just saving
+them again with only relevant info.</p>
+<pre class="r"><code>neighbShape &lt;- neighbShape[, c(1, 2, 42:44)]
+districtShape &lt;- districtShape[, c(1:4, 39:41)]
+postcode4Shape &lt;- postcode4Shape[, c(1, 37)]
+postcode5Shape &lt;- postcode5Shape[, c(1, 37)]
+postcode6Shape &lt;- postcode6Shape[, c(1, 35)]
+fsave(list(neighbShape, districtShape, postcode4Shape, postcode5Shape, postcode6Shape, voronoi), compress = TRUE,
+    file = &quot;shapes.RData&quot;)</code></pre>
+</div>
+</div>
+<div id="step-2-c---actually-do-the-segregation-calculations"
+class="section level2">
+<h2>Step 2 c - actually do the segregation calculations</h2>
+<div id="loading-in-data-again-1" class="section level3">
+<h3>loading in data again</h3>
+<pre class="r"><code># raster points for the whole country, with coordinates, voronoi tiles, and administrative information added
+load(&quot;./data/processed/20220714raster_vor.RData&quot;)
+rast &lt;- x
+rm(x)
+load(&quot;./data/processed/20220714shapes.RData&quot;)
+shapes &lt;- x
+rm(x)
+voronoi &lt;- shapes[[6]]
+load(&quot;./data/processed/20220715polarization.rda&quot;)
+pollstations &lt;- x
+rm(x)
+# Ensuring that the class of &#39;pollstations&#39; is &#39;sf&#39; and the CRS is correct:
+pollstations &lt;- sf::st_as_sf(x = as.data.frame(pollstations), crs = sf::st_crs(&quot;+proj=longlat +datum=WGS84&quot;),
+    coords = c(&quot;long&quot;, &quot;lat&quot;))</code></pre>
+</div>
+</div>
+</div>
+
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
