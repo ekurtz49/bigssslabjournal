@@ -9,9 +9,23 @@ bibliography: references.bib
 navbar:
   left:
     - icon: fa-home
+<<<<<<< HEAD
       text: "My presentation"
       href: presentation.html
 
+=======
+      href: index.html
+    - text: "My presentation"
+      href: presentation.html
+#    - text: "My journal"
+#      menu:
+ #     - text: "Day 1"
+#        href: lab1.html
+    #  - text: "Day 6"
+    #    href: week2day1.html
+    #  - text: "Day 7"
+    #    href: week2day2.html
+>>>>>>> cea69aa7ce65d4c8c7f78aab61340757448cce57
         
         # here, other .Rmds can be added
 
