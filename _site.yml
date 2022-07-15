@@ -10,10 +10,10 @@ navbar:
   left:
     - icon: fa-home
       href: index.html
-      text: "My presentation"
+    - text: "My presentation"
       href: presentation.html
-    - text: "My journal"
-      menu:
+#    - text: "My journal"
+#      menu:
  #     - text: "Day 1"
 #        href: lab1.html
     #  - text: "Day 6"
