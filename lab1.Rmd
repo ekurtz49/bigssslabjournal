@@ -1,0 +1,570 @@
+---
+title: "Journal 1"
+#bibliography: references.bib
+author: "Emily Kurtz"
+output: 
+  html_document:
+    css: tweaks.css
+    toc:  true
+    toc_float: true
+    number_sections: false
+ 
+---
+
+
+
+```{r, globalsettings, echo=FALSE, warning=FALSE, results='hide'}
+library(knitr)
+
+knitr::opts_chunk$set(echo = TRUE)
+opts_chunk$set(tidy.opts=list(width.cutoff=100),tidy=TRUE, warning = FALSE, message = FALSE,comment = "#>", cache=TRUE, class.source=c("test"), class.output=c("test2"))
+options(width = 100)
+rgl::setupKnitr()
+
+
+
+colorize <- function(x, color) {sprintf("<span style='color: %s;'>%s</span>", color, x) }
+
+```
+
+```{r klippy, echo=FALSE, include=TRUE}
+klippy::klippy(position = c('top', 'right'))
+#klippy::klippy(color = 'darkred')
+#klippy::klippy(tooltip_message = 'Click to copy', tooltip_success = 'Done')
+```
+
+Last compiled on `r format(Sys.time(), '%B, %Y')`
+
+<br>
+
+----
+  
+This page will contain as much of the first week's activities (i.e. those on polarization) as I can get done. Down the line, I may reorganize.
+  
+
+----
+
+```{r, include = FALSE}
+fsave <- function(x, file, location = "./data/processed/", ...) {
+    if (!dir.exists(location))
+        dir.create(location)
+    datename <- substr(gsub("[:-]", "", Sys.time()), 1, 8)
+    totalname <- paste(location, datename, file, sep = "")
+    print(paste("SAVED: ", totalname, sep = ""))
+    save(x, file = totalname)
+}
+
+fpackage.check <- function(packages) {
+    lapply(packages, FUN = function(x) {
+        if (!require(x, character.only = TRUE)) {
+            install.packages(x, dependencies = TRUE)
+            library(x, character.only = TRUE)
+        }
+    })
+}
+
+colorize <- function(x, color) {
+    sprintf("<span style='color: %s;'>%s</span>", color, x)
+}
+```
+
+```{r}
+# load in the data
+kieskom <- read.csv("./data/kieskompas_df.csv")
+# names(kieskom) #variable labels are the Dutch statements... let's relabel them
+
+names(kieskom)[-c(1, 2)] <- labs <- c("build1", "build2", "build3", "democracy1", "democracy2", "democracy3",
+    "democracy4", "social1", "social2", "social3", "social4", "climate1", "climate2", "climate3", "climate4",
+    "educ_care1", "educ_care2", "educ_care3", "educ_care4", "educ_care5", "immigration1", "immigration2",
+    "immigration3", "foreign_policy1", "foreign_policy2", "foreign_policy3", "foreign_policy4", "justice1",
+    "justice2", "justice3")
+kieskom <- kieskom[-1]  # exclude the indicator column
+names(kieskom)[-1] <- paste0("kieskom_", names(kieskom)[-1])  # add a kieskom label to the column names
+names(kieskom)[1] <- "party"
+
+# check out the data frame
+head(kieskom)
+```
+
+```{r}
+# public data include expert-level data (ie, expert judgement); and mean and median judgements we
+# use data at the expert-level
+library(haven)
+pop <- read_dta("./data/expert_data_stata.dta")
+
+# subset Dutch parties (country id=19)
+pop <- pop[which(pop$country_id == 19), ]
+
+# subset party and dimensions names(pop)
+pop <- pop[, c(4, 6:21)]
+# add poppa label to variables names(pop)[-c(1)] <- paste0('pop_',names(pop)[-c(1)])
+```
+
+```{r}
+ches <- read_dta("./data/CHES2019_experts.dta")
+ches <- as.data.frame(ches)
+
+dutch <- 1001:1051  #Dutch party ids
+ches <- ches[ches$party_id %in% dutch, ]  #subset Dutch parties
+
+# subset party and dimensions names(ches)
+ches <- ches[, c(3, 5:49)]
+
+# add ches label to variables names(ches)[-c(1)] <- paste0('ches_',names(ches)[-c(1)])
+# unique(pop$party) unique(ches$party_name)
+```
+
+
+
+
+
+
+
+
+
+```{r}
+# assignment 3.2 from segregation, will reorganize later
+set.seed(567732)
+g1 <- sample(20:400, 10)  #counts group 1
+g2 <- sample(20:400, 10)  #counts group 2
+popcounts <- data.frame(g1, g2)
+distances <- matrix(sample(20:400, 100), nrow = 10, ncol = 10)
+distances[lower.tri(distances)] <- (t(distances)[lower.tri(distances)])
+weights <- exp(-distances/100)
+diag(weights) <- 0
+rm(list = c("g1", "g2", "distances"))
+weights
+
+
+# construct the local environment
+# this can be computed using the formula 3.1
+# τ̃ i=Σjwijτj,
+# where w_ij is the weights matrix and tau_j is the spatial density
+
+
+#Hmisc package has a weighted average function, check it out
+
+
+#row standardize the weights matrix
+weightsStd<-weights/rowSums(weights)
+# calculate the desired matrix using the given formula
+tautilde <- weightsStd %*% as.matrix(popcounts, nrow=10)
+```
+
+
+```{r}
+$\frac{tau_m P _{mn} + \tau_n P_{nm}}{\tau_m + \tau_N}}$
+```
+
+
+
+```{r}
+# version 09-06-2007
+
+
+# function define world
+iniworld <- function(N = 2000, cn = 4, h = 1, tc = 0.9, pg = c(0.5, 0.5), distropTN = TRUE, plotworld = TRUE,
+    seed = NULL) {
+    # N= number of agents (even number) cn= number of clusters (even number) h= cluster homogeneity
+    # (0.5-1) tc= thinning constant. .9 means retain 90% pg= proportion of groups; length is number
+    # of groups distropTN= use truncated normal to generate opinions, default = false
+
+    # in paper opinions [0,1], here [-1,1] in paper tc is 1 - tc
+
+    if (is.null(seed))
+        seed <- sample(45667:159876, 1)
+
+    set.seed(seed)
+
+    N_ori <- N
+
+    # functions
+    spher_to_cart <- function(r, theta, phi) {
+        x = r * cos(phi) * sin(theta)
+        y = r * sin(theta) * sin(phi)
+        z = r * cos(theta)
+        coordinatesxyz <- matrix(c(x, y, z), ncol = 3)
+        return(coordinatesxyz)
+    }
+
+    distl <- function(x) {
+        distVincentySphere(x, matlonglat, r = 1)
+    }
+
+    # if tc<1 we need to increase initial N, make sure to keep even number
+    if (tc < 1) {
+        N <- trunc(N/(tc * 10)) * 10
+    }
+
+    # define (random) position of agents on sphere:
+    # http://mathworld.wolfram.com/SpherePointPicking.html
+    r <- 1
+    phi <- 2 * pi * runif(N)
+    theta <- acos(2 * runif(N) - 1)
+    coordinatesxyz <- spher_to_cart(r, theta, phi)
+
+    phi_r <- (360 * phi)/(2 * pi)
+    theta_r <- (180 * theta)/pi
+    lat <- 90 - theta_r
+    long <- ifelse(phi_r >= 0 & phi_r < 180, -phi_r, abs(phi_r - 360))
+
+    matlonglat <- matrix(c(long, lat), ncol = 2)
+
+    # improve: we only need to calculate half
+    matlonglatlist <- lapply(seq_len(nrow(matlonglat)), function(i) matlonglat[i, ])
+
+    distl <- function(x) {
+        distVincentySphere(x, matlonglat, r = 1)
+    }
+
+    matdist <- sapply(matlonglatlist, distl)
+
+    # model segregation: could be improved. check existing packages.
+    parents <- sample(1:N, cn)
+    groups <- rep(NA, N)
+    # fix if cn==1
+    groups[parents] <- sample(c(rep(1, round(cn * pg[1])), rep(-1, cn - round(cn * pg[1]))), cn, replace = FALSE)
+
+    # to whom do children belong
+    clusterchildren <- rep(NA, N)
+
+    for (i in c(1:N)) {
+        if (!(i %in% parents)) {
+            # which parents is closest
+            clusterchildren[i] <- parents[which(matdist[i, parents] == min(matdist[i, parents]))]
+            # give child same initial value as closest parent
+            group <- groups[clusterchildren[i]]
+            # change value child depending of cluster homogeneity
+            groups[i] <- ifelse(group == -1, sample(c(-1, 1), 1, prob = c(h, 1 - h)), sample(c(-1, 1),
+                1, prob = c(1 - h, h)))
+        }
+    }
+
+    # define opinions of agents
+    if (distropTN == TRUE) {
+        opinions <- rtruncnorm(N, a = -1, b = 1, mean = 0, sd = 0.45)
+    }
+    # if(distropTN==FALSE) {opinions <- runif(N, min = -1, max = 1)}
+
+    # for (future) plotting
+    color <- ifelse(groups == 1, "blue", "red")
+
+    # thin clusters, make cluster boundaries sharper
+    if (tc < 1) {
+        childIDi <- sampletc <- NA
+        # put in big function
+        for (i in 1:cn) {
+            childIDi <- which(clusterchildren == parents[i])
+            distchildparenti <- matdist[parents[i], childIDi]
+            # samplei <- sample(childIDi, trunc(tc*length(childIDi)),
+            # prob=exp(-distchildparenti)^2)
+            cutoffdistance <- quantile(distchildparenti, tc)
+            samplei <- childIDi[distchildparenti < cutoffdistance]
+            sampletc <- c(sampletc, samplei)
+        }
+        clusterchildren <- sampletc <- sampletc[-1]
+        sampletc <- c(sampletc, parents)
+        N_obs <- length(sampletc)
+    }
+
+    N <- N_ori  #setting back to original input
+
+    if (tc == 1) {
+        sampletc <- NA
+        N_obs <- N_ori
+    }
+
+    if (plotworld & tc == 1) {
+        .check3d()
+        rgl.close()
+        plot3d(coordinatesxyz, col = color, box = FALSE, axes = FALSE, xlab = "", ylab = "", zlab = "",
+            size = 8, xlim = c(-1, 1), ylim = c(-1, 1), zlim = c(-1, 1))
+        rgl.spheres(0, 0, 0, radius = 0.995, color = "grey")
+    }
+
+    if (tc == 1) {
+        worldlist <- list(seed, coordinatesxyz, color, groups, opinions, matdist, N, cn, h, tc, pg, N_obs,
+            parents, clusterchildren, matlonglat)
+        names(worldlist) <- c("seed", "coordinatesxyz", "color", "groups", "opinions", "matdist", "N",
+            "cn", "h", "tc", "pg", "N_obs", "parents", "clusterchildren", "matlonglat")
+        return(worldlist)
+    }
+
+    if (plotworld & tc < 1) {
+        .check3d()
+        rgl.close()
+        plot3d(coordinatesxyz[sampletc, ], col = color[sampletc], box = FALSE, axes = FALSE, xlab = "",
+            ylab = "", zlab = "", size = 8, xlim = c(-1, 1), ylim = c(-1, 1), zlim = c(-1, 1))
+        rgl.spheres(0, 0, 0, radius = 0.995, color = "grey")
+    }
+
+    if (tc < 1) {
+        worldlist <- list(seed, coordinatesxyz[sampletc, ], color[sampletc], groups[sampletc], opinions[sampletc],
+            matdist[sampletc, sampletc], N, cn, h, tc, pg, N_obs, parents, clusterchildren, matlonglat[sampletc,
+                ])
+        names(worldlist) <- c("seed", "coordinatesxyz", "color", "groups", "opinions", "matdist", "N",
+            "cn", "h", "tc", "pg", "N_obs", "parents", "clusterchildren", "matlonglat")
+        return(worldlist)
+    }
+
+
+}
+
+```
+
+
+```{r}
+# page 143 of Reardon and O'Sullivan, formula 13, shows the White spatial proximity index
+# https://rdrr.io/cran/seg/man/isp.html
+
+# sum(pi_m * P_mm / P_tt)
+# basically just the distances for someone to their own people / to everyone else
+
+# i am going to have someone input a square matrix that has all of the people of one group in the first chunk, second in second, etc. let's just start with two groups and a 10 by 10
+# entries in cells are distances
+
+
+# pi_m is the proportion of people in group m, matrix is the distances matrix for each individual to each other (symmetric matrix), and gpMember is an n by g matrix where n is the number of people and g is the number of groups
+
+
+# okay think that works most of the way for two groups, so now i need to do for n groups
+whiteIndex<-function(pi_m, matrix, gpMember){
+    P_mm<-rep(0,ncol(gpMember))
+    # calculate P_tt
+    # this is just the mean of the pairwise distances
+    P_tt <- (sum(rowSums(matrix))/2) / choose(2, nrow(matrix))
+    for(i in 1:ncol(gpMember)){
+      # calculate P_mm
+      # this is just the mean of the pairwise distances for all pairs where both in gp i
+      index <- which(gpMember[,i] == 1)
+      P_mm[i] <- sum(rowSums(matrix[index,index]) / 2) / choose(2, sum(gpMember[,i]))
+    }
+    white <- sum(pi_m*P_mm/P_tt) #need to ensure pi_m is of length gp1size
+    white
+}
+```
+
+
+
+
+
+```{r}
+# version 09-06-2007
+
+
+# function define world
+iniworld <- function(N = 2000, cn = 4, h = 1, tc = 0.9, pg = c(0.5, 0.5), distropTN = TRUE, plotworld = TRUE,
+    seed = NULL) {
+    # N= number of agents (even number) cn= number of clusters (even number) h= cluster homogeneity
+    # (0.5-1) tc= thinning constant. .9 means retain 90% pg= proportion of groups; length is number
+    # of groups distropTN= use truncated normal to generate opinions, default = false
+
+    # in paper opinions [0,1], here [-1,1] in paper tc is 1 - tc
+
+    if (is.null(seed))
+        seed <- sample(45667:159876, 1)
+
+    set.seed(seed)
+
+    N_ori <- N
+
+    # functions
+    spher_to_cart <- function(r, theta, phi) {
+        x = r * cos(phi) * sin(theta)
+        y = r * sin(theta) * sin(phi)
+        z = r * cos(theta)
+        coordinatesxyz <- matrix(c(x, y, z), ncol = 3)
+        return(coordinatesxyz)
+    }
+
+    distl <- function(x) {
+        distVincentySphere(x, matlonglat, r = 1)
+    }
+
+    # if tc<1 we need to increase initial N, make sure to keep even number
+    if (tc < 1) {
+        N <- trunc(N/(tc * 10)) * 10
+    }
+
+    # define (random) position of agents on sphere:
+    # http://mathworld.wolfram.com/SpherePointPicking.html
+    r <- 1
+    phi <- 2 * pi * runif(N)
+    theta <- acos(2 * runif(N) - 1)
+    coordinatesxyz <- spher_to_cart(r, theta, phi)
+
+    phi_r <- (360 * phi)/(2 * pi)
+    theta_r <- (180 * theta)/pi
+    lat <- 90 - theta_r
+    long <- ifelse(phi_r >= 0 & phi_r < 180, -phi_r, abs(phi_r - 360))
+
+    matlonglat <- matrix(c(long, lat), ncol = 2)
+
+    # improve: we only need to calculate half
+    matlonglatlist <- lapply(seq_len(nrow(matlonglat)), function(i) matlonglat[i, ])
+
+    distl <- function(x) {
+        distVincentySphere(x, matlonglat, r = 1)
+    }
+
+    matdist <- sapply(matlonglatlist, distl)
+
+    # model segregation: could be improved. check existing packages.
+    parents <- sample(1:N, cn)
+    groups <- rep(NA, N)
+    # fix if cn==1
+    groups[parents] <- sample(c(rep(1, round(cn * pg[1])), rep(-1, cn - round(cn * pg[1]))), cn, replace = FALSE)
+
+    # to whom do children belong
+    clusterchildren <- rep(NA, N)
+
+    for (i in c(1:N)) {
+        if (!(i %in% parents)) {
+            # which parents is closest
+            clusterchildren[i] <- parents[which(matdist[i, parents] == min(matdist[i, parents]))]
+            # give child same initial value as closest parent
+            group <- groups[clusterchildren[i]]
+            # change value child depending of cluster homogeneity
+            groups[i] <- ifelse(group == -1, sample(c(-1, 1), 1, prob = c(h, 1 - h)), sample(c(-1, 1),
+                1, prob = c(1 - h, h)))
+        }
+    }
+
+    # define opinions of agents
+    if (distropTN == TRUE) {
+        opinions <- rtruncnorm(N, a = -1, b = 1, mean = 0, sd = 0.45)
+    }
+    # if(distropTN==FALSE) {opinions <- runif(N, min = -1, max = 1)}
+
+    # for (future) plotting
+    color <- ifelse(groups == 1, "blue", "red")
+
+    # thin clusters, make cluster boundaries sharper
+    if (tc < 1) {
+        childIDi <- sampletc <- NA
+        # put in big function
+        for (i in 1:cn) {
+            childIDi <- which(clusterchildren == parents[i])
+            distchildparenti <- matdist[parents[i], childIDi]
+            # samplei <- sample(childIDi, trunc(tc*length(childIDi)),
+            # prob=exp(-distchildparenti)^2)
+            cutoffdistance <- quantile(distchildparenti, tc)
+            samplei <- childIDi[distchildparenti < cutoffdistance]
+            sampletc <- c(sampletc, samplei)
+        }
+        clusterchildren <- sampletc <- sampletc[-1]
+        sampletc <- c(sampletc, parents)
+        N_obs <- length(sampletc)
+    }
+
+    N <- N_ori  #setting back to original input
+
+    if (tc == 1) {
+        sampletc <- NA
+        N_obs <- N_ori
+    }
+
+    if (plotworld & tc == 1) {
+        .check3d()
+        rgl.close()
+        plot3d(coordinatesxyz, col = color, box = FALSE, axes = FALSE, xlab = "", ylab = "", zlab = "",
+            size = 8, xlim = c(-1, 1), ylim = c(-1, 1), zlim = c(-1, 1))
+        rgl.spheres(0, 0, 0, radius = 0.995, color = "grey")
+    }
+
+    if (tc == 1) {
+        worldlist <- list(seed, coordinatesxyz, color, groups, opinions, matdist, N, cn, h, tc, pg, N_obs,
+            parents, clusterchildren, matlonglat)
+        names(worldlist) <- c("seed", "coordinatesxyz", "color", "groups", "opinions", "matdist", "N",
+            "cn", "h", "tc", "pg", "N_obs", "parents", "clusterchildren", "matlonglat")
+        return(worldlist)
+    }
+
+    if (plotworld & tc < 1) {
+        .check3d()
+        rgl.close()
+        plot3d(coordinatesxyz[sampletc, ], col = color[sampletc], box = FALSE, axes = FALSE, xlab = "",
+            ylab = "", zlab = "", size = 8, xlim = c(-1, 1), ylim = c(-1, 1), zlim = c(-1, 1))
+        rgl.spheres(0, 0, 0, radius = 0.995, color = "grey")
+    }
+
+    if (tc < 1) {
+        worldlist <- list(seed, coordinatesxyz[sampletc, ], color[sampletc], groups[sampletc], opinions[sampletc],
+            matdist[sampletc, sampletc], N, cn, h, tc, pg, N_obs, parents, clusterchildren, matlonglat[sampletc,
+                ])
+        names(worldlist) <- c("seed", "coordinatesxyz", "color", "groups", "opinions", "matdist", "N",
+            "cn", "h", "tc", "pg", "N_obs", "parents", "clusterchildren", "matlonglat")
+        return(worldlist)
+    }
+
+
+}
+```
+
+
+
+
+```{r}
+# define parameters
+N <- c(200)
+cn <- c(8)
+h <- c(0.7)
+tc <- c(0.7)
+pg <- c(0.6)
+
+# run the loop in parallel
+n.cores <- parallel::detectCores() - 1  #save one core for other work
+# create the cluster
+my.cluster <- parallel::makeCluster(n.cores, type = "PSOCK")
+# register it to be used by %dopar%
+doParallel::registerDoParallel(cl = my.cluster)
+
+
+# to get the same results
+set.seed(5893743)
+
+# make sure to define the correct folder beforehand
+dataworlds <- foreach(Nsim = N, i = icount()) %:% foreach(cnsim = cn, j = icount()) %:% foreach(hsim = h,
+    k = icount()) %:% foreach(tcsim = tc, l = icount()) %:% foreach(pgsim = pg, m = icount(), .packages = packages,
+    .inorder = TRUE) %dopar% {
+    world <- iniworld(N = Nsim, cn = cnsim, h = hsim, tc = tcsim, pg = pgsim, plotworld = FALSE, seed = NULL)
+    save(world, file = paste("./data/processed/worlds/worldN", Nsim, "cn", cnsim, "h", hsim, "tc", tcsim,
+        "pg", pgsim, "rda", sep = ""), compress = "bzip2")
+    # return(test)
+}
+
+```
+
+
+
+
+
+
+```{r}
+# define parameters
+N <- 200
+cn <- 8
+h <- 0.7
+tc <- 0.7
+pg <- 0.6
+
+# run the loop in parallel
+n.cores <- parallel::detectCores() - 1  #save one core for other work
+# create the cluster
+my.cluster <- parallel::makeCluster(n.cores, type = "PSOCK")
+# register it to be used by %dopar%
+doParallel::registerDoParallel(cl = my.cluster)
+
+
+# to get the same results
+set.seed(5893743)
+
+# make sure to define the correct folder beforehand
+
+    world <- iniworld(N = N, cn = cn, h = h, tc = tc, pg = pg, plotworld = FALSE, seed = NULL)
+    save(world, file = paste("./data/processed/worlds/worldN", N, "cn", cn, "h", h, "tc", tc,
+        "pg", pg, "rda", sep = ""), compress = "bzip2")
+    # return(test)
+
+
+```

@@ -325,7 +325,7 @@ fsave(rast, compress = TRUE, file = "raster.RData")
 
 ```{r}
 #rm(list=ls())
-#load("./data/processed/20220714raster.RData")
+#load("./data/processed/20220715raster.RData")
 #rast <- x
 #rm(x)
 load("./data/processed/20220715polarization.rda")
@@ -415,10 +415,10 @@ fsave(list(neighbShape, districtShape, postcode4Shape, postcode5Shape, postcode6
 
 ```{r}
 # raster points for the whole country, with coordinates, voronoi tiles, and administrative information added
-load("./data/processed/20220714raster_vor.RData")
+load("./data/processed/20220715raster_vor.RData")
 rast <- x
 rm(x)
-load("./data/processed/20220714shapes.RData")
+load("./data/processed/20220715shapes.RData")
 shapes <- x
 rm(x)
 voronoi <- shapes[[6]]
@@ -468,6 +468,181 @@ leaflet::leaflet(tilerast) |>
     leaflet::setView(lng = sf::st_coordinates(station)[, 1], lat = sf::st_coordinates(station)[, 2],
         zoom = 14)
 ```
+
+### city selection
+
+```{r}
+city <- "Leeuwarden"
+#select correct rasters cells 
+cityrast_id <- which(rast$GM_NAAM == city)  # will come handy later ;)
+cityrast <- rast[cityrast_id, ]
+#select correct voronois
+cityvor <- voronoi[voronoi$voronoi %in% rast$voronoi[cityrast_id], ]
+```
+
+### calculate distance matrix
+
+```{r}
+distmat <- matrix(sf::st_distance(cityrast), ncol = nrow(cityrast))
+distmat <- distmat/1000
+# set main diagonal to .052
+diag(distmat) <- 0.052140543316
+```
+
+### writing a loop
+
+```{r}
+# slope of the distance decay function:
+s <- 2
+# For each voronoi tile "i" in the city...
+for (u in 1:nrow(cityvor)) {
+  
+  
+  #... we find which raster cells belong to tile "i".
+  #tilerast <- subset(cityrast, cityrast$voronoi == cityvor$voronoi[u])
+  tilerast <- cityrast[cityrast$voronoi == cityvor$voronoi[u],]
+  
+  #now we select the raster cells id within the tile
+  cellids <- which(cityrast$crs28992res100m %in% tilerast$crs28992res100m)
+  
+  # And if there are more than 2 raster cells within tile...
+  if (nrow(tilerast) > 1) {
+    # ... then calculate distances among its raster cells...
+    distmatcell <- distmat[cellids, cellids] 
+      
+    
+    
+    #... calculate the local environment of each cell...
+    myenv <- fcalcLocalEnv(
+      data = as.matrix(cbind(tilerast$n_w, tilerast$n_nw)),
+      distmat = distmatcell,
+      coords = sf::st_coordinates(tilerast),
+      s = s
+    )
+    
+    #use the seg package to calculate segregation measures. 
+    seg <- seg::spatseg(myenv)
+    
+    
+    #... and, finally, save the I estimate to our data.frame "vor":
+    cityvor$D_s2[u] <- seg@d
+    cityvor$R_s2[u] <- seg@r
+    cityvor$H_s2[u] <- seg@h
+    cityvor$P12_s2[u] <- seg@p[1,2]
+    cityvor$P21_s2[u] <- seg@p[2,1]
+    
+    #may want to add proximity index. 
+    
+    
+  }
+  
+}
+```
+
+### merging the polarization scores
+
+```{r, eval = FALSE}
+cityvor2_as_sf <- sf::st_intersection(x = pollstations, y = cityvor, sf::sf_use_s2(FALSE))
+#cityvor2 <- merge(as.data.frame(cityvor), as.data.frame(pollstations), by="voronoi")
+#class(cityvor2)<-"sf"
+#cityvor2 <- sf::st_as_sf(x = cityvor2, crs = sf::st_crs("+proj=longlat +datum=WGS84"), coords = c("long", "lat"))
+#cityvor2_as_sf <- st_as_sf(cityvor2, crs=st_crs(cityvor), geom=st_geometry(cityvor))
+```
+
+```{r, eval = FALSE}
+fsave(cityvor2_as_sf, file = "test3")
+```
+
+
+```{r}
+load("./data/processed/20220715test3")
+cityvor2_as_sf <- x
+rm(x)
+```
+
+### Creating Correlation matrices
+
+
+```{r}
+cityvor2 <- as.data.frame(cityvor2_as_sf)
+correlation_matrix <- cor(cityvor2[, c("D_s2", "R_s2", "H_s2", "P12_s2", "P21_s2", "PvarX", 
+                                       "PERX", "PVX", "PvarY", "PERY", "PVY", "PvarXY", 
+                                       "PERXY", "PVXY")])
+correlation_matrix[1:5, 6:ncol(correlation_matrix)]
+correlation_matrix[4, 9] #biggest relevant correlation, P12 and PvarY (which is progressive/conservative)
+```
+
+
+### Create a visual for P12 and PvarY
+
+```{r}
+palette <- leaflet::colorNumeric(
+  palette = "viridis", # or other RColorBrewer palettes e.g "Greens", "magma"
+  domain = cityvor2_as_sf$P12_s2
+)
+leaflet::leaflet(cityvor2_as_sf) |>
+  leaflet::addTiles() |>
+  leaflet::addProviderTiles(providers$Stamen.Toner) |>
+  leaflet::addPolygons(
+    label = ~P12_s2,
+    color = ~palette(P12_s2),
+    opacity = 0.7
+  ) |>
+  leaflet::addLegend(
+    "topleft",
+    pal = palette, 
+    values = ~P12_s2,
+    title = "P12_s2",
+    opacity = 0.7
+  )
+```
+
+
+
+
+```{r}
+palette <- leaflet::colorNumeric(
+  palette = "viridis", # or other RColorBrewer palettes e.g "Greens", "magma"
+  domain = cityvor2$PvarY
+)
+leaflet::leaflet(cityvor2_as_sf ) |>
+  leaflet::addTiles() |>
+  leaflet::addProviderTiles(providers$Stamen.Toner) |>
+  leaflet::addPolygons(
+    label = ~PvarY,
+    color = ~palette(PvarY),
+    opacity = 0.7
+  ) |>
+  leaflet::addLegend(
+    "topleft",
+    pal = palette, 
+    values = ~PvarY,
+    title = "PvarY",
+    opacity = 0.7
+  )
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ### city selection
 
@@ -541,21 +716,21 @@ for (u in 1:nrow(cityvor)) {
 
 ### merging the polarization scores
 
-```{r}
-#cityvor2_as_sf <- sf::st_intersection(x = pollstations, y = cityvor, sf::sf_use_s2(FALSE))
-cityvor2 <- merge(as.data.frame(cityvor), as.data.frame(pollstations), by="voronoi")
+```{r, eval = FALSE}
+cityvor2_as_sf <- sf::st_intersection(x = pollstations, y = cityvor, sf::sf_use_s2(FALSE))
+#cityvor2 <- merge(as.data.frame(cityvor), as.data.frame(pollstations), by="voronoi")
 #class(cityvor2)<-"sf"
 #cityvor2 <- sf::st_as_sf(x = cityvor2, crs = sf::st_crs("+proj=longlat +datum=WGS84"), coords = c("long", "lat"))
 #cityvor2_as_sf <- st_as_sf(cityvor2, crs=st_crs(cityvor), geom=st_geometry(cityvor))
 ```
 
 ```{r, eval = FALSE}
-fsave(cityvor2_as_sf,, file = "test2")
+fsave(cityvor2_as_sf, file = "test3")
 ```
 
 
 ```{r}
-load("./data/processed/20220715test2")
+load("./data/processed/20220715test3")
 cityvor2_as_sf <- x
 rm(x)
 ```
@@ -563,7 +738,8 @@ rm(x)
 ### Creating Correlation matrices
 
 
-```{r, eval = FALSE}
+```{r}
+cityvor2 <- as.data.frame(cityvor2_as_sf)
 correlation_matrix <- cor(cityvor2[, c("D_s2", "R_s2", "H_s2", "P12_s2", "P21_s2", "PvarX", 
                                        "PERX", "PVX", "PvarY", "PERY", "PVY", "PvarXY", 
                                        "PERXY", "PVXY")])
